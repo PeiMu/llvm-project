@@ -19,6 +19,8 @@
 #include "mlir/Dialect/ArmSVE/Transforms.h"
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
+#include "mlir/Dialect/Hexagon/HexagonDialect.h"
+#include "mlir/Dialect/Hexagon/Transforms.h"
 #include "mlir/Dialect/StandardOps/IR/Ops.h"
 #include "mlir/Dialect/Vector/VectorOps.h"
 #include "mlir/Dialect/X86Vector/Transforms.h"
@@ -37,6 +39,7 @@ struct LowerVectorToLLVMPass
     this->enableArmNeon = options.enableArmNeon;
     this->enableArmSVE = options.enableArmSVE;
     this->enableAMX = options.enableAMX;
+    this->enableHexagon = options.enableHexagon;
     this->enableX86Vector = options.enableX86Vector;
   }
   // Override explicitly to allow conditional dialect dependence.
@@ -49,6 +52,8 @@ struct LowerVectorToLLVMPass
       registry.insert<arm_sve::ArmSVEDialect>();
     if (enableAMX)
       registry.insert<amx::AMXDialect>();
+    if (enableHexagon)
+      registry.insert<hexagon::HexagonDialect>();
     if (enableX86Vector)
       registry.insert<x86vector::X86VectorDialect>();
   }
@@ -101,6 +106,10 @@ void LowerVectorToLLVMPass::runOnOperation() {
   if (enableX86Vector) {
     configureX86VectorLegalizeForExportTarget(target);
     populateX86VectorLegalizeForLLVMExportPatterns(converter, patterns);
+  }
+  if (enableHexagon) {
+    configureHexagonLegalizeForExportTarget(target);
+    populateHexagonLegalizeForLLVMExportPatterns(converter, patterns);
   }
 
   if (failed(

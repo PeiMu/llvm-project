@@ -24,7 +24,7 @@ struct LowerVectorToLLVMOptions {
   LowerVectorToLLVMOptions()
       : reassociateFPReductions(false), enableIndexOptimizations(true),
         enableArmNeon(false), enableArmSVE(false), enableAMX(false),
-        enableX86Vector(false) {}
+        enableX86Vector(false), enableHexagon(false) {}
 
   LowerVectorToLLVMOptions &setReassociateFPReductions(bool b) {
     reassociateFPReductions = b;
@@ -50,6 +50,10 @@ struct LowerVectorToLLVMOptions {
     enableX86Vector = b;
     return *this;
   }
+  LowerVectorToLLVMOptions &setEnableHexagon(bool b) {
+    enableHexagon = b;
+    return *this;
+  }
 
   bool reassociateFPReductions;
   bool enableIndexOptimizations;
@@ -57,6 +61,7 @@ struct LowerVectorToLLVMOptions {
   bool enableArmSVE;
   bool enableAMX;
   bool enableX86Vector;
+  bool enableHexagon;
 };
 
 /// Collect a set of patterns to convert from Vector contractions to LLVM Matrix

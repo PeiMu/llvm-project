@@ -645,7 +645,7 @@ def ConvertVectorToLLVM : Pass<"convert-vector-to-llvm", "ModuleOp"> {
     operations. The lowering pass provides several options to control
     the kinds of optimizations that are allowed. It also provides options
     that enable the use of one or more architectural-specific dialects
-    (AMX, X86Vector, ArmNeon, ArmSVE, etc.) in combination with the
+    (AMX, X86Vector, ArmNeon, ArmSVE, Hexagon, etc.) in combination with the
     architectural-neutral vector dialect lowering.
 
   }];
@@ -675,8 +675,12 @@ def ConvertVectorToLLVM : Pass<"convert-vector-to-llvm", "ModuleOp"> {
     Option<"enableX86Vector", "enable-x86vector",
            "bool", /*default=*/"false",
            "Enables the use of X86Vector dialect while lowering the vector "
-	   "dialect.">
-  ];
+	   "dialect.">,
+    Option<"enableHexagon", "enable-hexagon",
+           "bool", /*default=*/"false",
+           "Enables the use of Hexagon dialect while lowering the vector "
+     "dialect.">
+];
 }
 
 //===----------------------------------------------------------------------===//

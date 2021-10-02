@@ -17,6 +17,7 @@ include "mlir/Interfaces/SideEffectInterfaces.td"
 include "mlir/Dialect/LLVMIR/LLVMOpBase.td"
 include "mlir/Dialect/StandardOps/IR/StandardOpsBase.td"
 include "mlir/Dialect/ArmSVE/ArmSVEOpBase.td"
+include "mlir/Dialect/Vector/ScalableVectorTypes.td"
 
 //===----------------------------------------------------------------------===//
 // ArmSVE dialect definition
@@ -47,13 +48,8 @@ def ArmSVE_ScalableVectorType : DialectType<ArmSVE_Dialect,
   }];
 }
 
-class ArmSVE_Type<string name> : TypeDef<ArmSVE_Dialect, name> { }
-
-def ScalableVectorType : ArmSVE_Type<"ScalableVector"> {
-  let mnemonic = "vector";
-
-  let summary = "Scalable vector type";
-
+def ScalableVectorType
+    : ScalableVector_Type<ArmSVE_Dialect, "ScalableVector"> {
   let description = [{
     A type representing scalable length SIMD vectors. Unlike fixed-length SIMD
     vectors, whose size is constant and known at compile time, scalable
