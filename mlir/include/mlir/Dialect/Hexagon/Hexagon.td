@@ -229,10 +229,11 @@ def HexagonMaskedDivOp : Hexagon_BinaryAAXMask_Op<"masked.div",
 // Hexagon intrinsic operation definitions
 //===----------------------------------------------------------------------===//
 
+/*
 class Hexagon_USLoad_IntrOp<string mnemonic, list<OpTrait> traits = []> :
   LLVM_IntrOpBase</*Dialect dialect=*/Hexagon_Dialect,
                   /*string opName=*/"intr." # mnemonic,
-                  /*string enumName=*/"riscv_" # !subst(".", "_", mnemonic),
+                  /*string enumName=*/"hexagon_V6_" # !subst(".", "_", mnemonic),
                   /*list<int> overloadedResults=*/[0],
                   /*list<int> overloadedOperands=*/[1],
                   /*list<OpTrait> traits=*/traits,
@@ -241,43 +242,48 @@ class Hexagon_USLoad_IntrOp<string mnemonic, list<OpTrait> traits = []> :
 class Hexagon_USStore_IntrOp<string mnemonic, list<OpTrait> traits = []> :
   LLVM_IntrOpBase</*Dialect dialect=*/Hexagon_Dialect,
                   /*string opName=*/"intr." # mnemonic,
-                  /*string enumName=*/"riscv_" # !subst(".", "_", mnemonic),
+                  /*string enumName=*/"hexagon_V6_" # !subst(".", "_", mnemonic),
                   /*list<int> overloadedResults=*/[],
                   /*list<int> overloadedOperands=*/[0, 2],
                   /*list<OpTrait> traits=*/traits,
                   /*int numResults=*/0>;
+*/
 
 class Hexagon_BinaryAAXNoMask_IntrOp<string mnemonic,
                                     list<OpTrait> traits = []> :
   LLVM_IntrOpBase</*Dialect dialect=*/Hexagon_Dialect,
                   /*string opName=*/"intr." # mnemonic,
-                  /*string enumName=*/"riscv_" # !subst(".", "_", mnemonic),
+                  /*string enumName=*/"hexagon_V6_" # !subst(".", "_", mnemonic),
                   /*list<int> overloadedResults=*/[0],
                   /*list<int> overloadedOperands=*/[1, 2],
                   /*list<OpTrait> traits=*/traits,
                   /*int numResults=*/1>;
 
+/*
 class Hexagon_BinaryAAXMask_IntrOp<string mnemonic, list<OpTrait> traits = []> :
   LLVM_IntrOpBase</*Dialect dialect=*/Hexagon_Dialect,
                   /*string opName=*/"intr." # mnemonic,
-                  /*string enumName=*/"riscv_" # !subst(".", "_", mnemonic),
+                  /*string enumName=*/"hexagon_V6_" # !subst(".", "_", mnemonic),
                   /*list<int> overloadedResults=*/[0],
                   /*list<int> overloadedOperands=*/[2, 4],
                   /*list<OpTrait> traits=*/traits,
                   /*int numResults=*/1>;
+*/
 
+/*
 def HexagonIntrLoadEleOp : Hexagon_USLoad_IntrOp<"vle">,
   Arguments<(ins LLVMPointerType, AnyInteger)>;
 def HexagonIntrStoreEleOp : Hexagon_USStore_IntrOp<"vse">,
   Arguments<(ins LLVMScalableVectorType, LLVMPointerType, AnyInteger)>;
+*/
 
-def HexagonIntrAddOp : Hexagon_BinaryAAXNoMask_IntrOp<"vadd">,
+def HexagonIntrAddOp : Hexagon_BinaryAAXNoMask_IntrOp<"vaddh">,
   Arguments<(ins LLVMScalableVectorType, AnyType, AnyInteger)>;
-def HexagonIntrSubOp : Hexagon_BinaryAAXNoMask_IntrOp<"vsub">,
+def HexagonIntrSubOp : Hexagon_BinaryAAXNoMask_IntrOp<"vsubh">,
   Arguments<(ins LLVMScalableVectorType, AnyType, AnyInteger)>;
-def HexagonIntrMulOp : Hexagon_BinaryAAXNoMask_IntrOp<"vmul">,
+def HexagonIntrMulOp : Hexagon_BinaryAAXNoMask_IntrOp<"vmpyh">,
   Arguments<(ins LLVMScalableVectorType, AnyType, AnyInteger)>;
-def HexagonIntrDivOp : Hexagon_BinaryAAXNoMask_IntrOp<"vdiv">,
+/*def HexagonIntrDivOp : Hexagon_BinaryAAXNoMask_IntrOp<"vdiv">,
   Arguments<(ins LLVMScalableVectorType, AnyType, AnyInteger)>;
 
 def HexagonMaskedIntrAddOp : Hexagon_BinaryAAXMask_IntrOp<"vadd_mask">,
@@ -292,5 +298,6 @@ def HexagonMaskedIntrMulOp : Hexagon_BinaryAAXMask_IntrOp<"vmul_mask">,
 def HexagonMaskedIntrDivOp : Hexagon_BinaryAAXMask_IntrOp<"vdiv_mask">,
   Arguments<(ins LLVMScalableVectorType, LLVMScalableVectorType, AnyType,
                  LLVMScalableVectorType, AnyInteger)>;
+*/
 
 #endif // Hexagon_OPS

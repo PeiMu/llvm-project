@@ -114,8 +114,7 @@ Type hexagon::HexagonDialect::parseType(DialectAsmParser &parser) const {
 	parser.parseKeyword(&mnemonic);
 	{
 		Type genType;
-		auto parseResult = generatedTypeParser(parser.getBuilder().getContext(),
-		                                       parser, mnemonic, genType);
+		auto parseResult = generatedTypeParser(parser, mnemonic, genType);
 		if (parseResult.hasValue())
 			return genType;
 	}

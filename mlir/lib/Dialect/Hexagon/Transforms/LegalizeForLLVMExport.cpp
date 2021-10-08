@@ -181,12 +181,12 @@ struct HexagonLoadOpLowering : public ConvertOpToLLVMPattern<HexagonLoadOp> {
 		Value bitCastedPtr = rewriter.create<LLVM::BitcastOp>(
 						loadOp.getLoc(), llvmDataTypePtr, dataPtr);
 		Value vl = loadOp.getOperand(2);
-		rewriter.replaceOpWithNewOp<HexagonIntrLoadEleOp>(
-						loadOp,
-						convertScalableVectorTypeToLLVM(resultType.cast<ScalableVectorType>(),
-						                                converter)
-										.getValue(),
-						bitCastedPtr, vl);
+//		rewriter.replaceOpWithNewOp<HexagonIntrLoadEleOp>(
+//						loadOp,
+//						convertScalableVectorTypeToLLVM(resultType.cast<ScalableVectorType>(),
+//						                                converter)
+//										.getValue(),
+//						bitCastedPtr, vl);
 		return success();
 	}
 };
@@ -221,8 +221,8 @@ struct HexagonStoreOpLowering : public ConvertOpToLLVMPattern<HexagonStoreOp> {
 		Value bitCastedPtr = rewriter.create<LLVM::BitcastOp>(
 						storeOp.getLoc(), llvmDataTypePtr, dataPtr);
 		Value vl = storeOp.getOperand(3);
-		rewriter.replaceOpWithNewOp<HexagonIntrStoreEleOp>(
-						storeOp, transformed.value(), bitCastedPtr, vl);
+//		rewriter.replaceOpWithNewOp<HexagonIntrStoreEleOp>(
+//						storeOp, transformed.value(), bitCastedPtr, vl);
 		return success();
 	}
 };
@@ -233,16 +233,16 @@ using HexagonSubOpLowering =
 OneToOneConvertToLLVMPattern<HexagonSubOp, HexagonIntrSubOp>;
 using HexagonMulOpLowering =
 OneToOneConvertToLLVMPattern<HexagonMulOp, HexagonIntrMulOp>;
-using HexagonDivOpLowering =
-OneToOneConvertToLLVMPattern<HexagonDivOp, HexagonIntrDivOp>;
-using HexagonMaskedAddOpLowering =
-OneToOneConvertToLLVMPattern<HexagonMaskedAddOp, HexagonMaskedIntrAddOp>;
-using HexagonMaskedSubOpLowering =
-OneToOneConvertToLLVMPattern<HexagonMaskedSubOp, HexagonMaskedIntrSubOp>;
-using HexagonMaskedMulOpLowering =
-OneToOneConvertToLLVMPattern<HexagonMaskedMulOp, HexagonMaskedIntrMulOp>;
-using HexagonMaskedDivOpLowering =
-OneToOneConvertToLLVMPattern<HexagonMaskedDivOp, HexagonMaskedIntrDivOp>;
+//using HexagonDivOpLowering =
+//OneToOneConvertToLLVMPattern<HexagonDivOp, HexagonIntrDivOp>;
+//using HexagonMaskedAddOpLowering =
+//OneToOneConvertToLLVMPattern<HexagonMaskedAddOp, HexagonMaskedIntrAddOp>;
+//using HexagonMaskedSubOpLowering =
+//OneToOneConvertToLLVMPattern<HexagonMaskedSubOp, HexagonMaskedIntrSubOp>;
+//using HexagonMaskedMulOpLowering =
+//OneToOneConvertToLLVMPattern<HexagonMaskedMulOp, HexagonMaskedIntrMulOp>;
+//using HexagonMaskedDivOpLowering =
+//OneToOneConvertToLLVMPattern<HexagonMaskedDivOp, HexagonMaskedIntrDivOp>;
 
 /// Populate the given list with patterns that convert from Hexagon to LLVM.
 void mlir::populateHexagonLegalizeForLLVMExportPatterns(
@@ -255,46 +255,31 @@ void mlir::populateHexagonLegalizeForLLVMExportPatterns(
 	});
 
 	// clang-format off
-	patterns.add<ForwardOperands<CallOp>,
+	patterns.add<
+	        ForwardOperands<CallOp>,
 					ForwardOperands<CallIndirectOp>,
 					ForwardOperands<ReturnOp>>(converter, &converter.getContext());
-	patterns.add<HexagonLoadOpLowering,
+	patterns.add<
+	        HexagonLoadOpLowering,
 					HexagonStoreOpLowering>(converter);
-	patterns.add<HexagonAddOpLowering,
+	patterns.add<
+	        HexagonAddOpLowering,
 					HexagonSubOpLowering,
-					HexagonMulOpLowering,
-					HexagonDivOpLowering,
-					HexagonSubOpLowering,
-					HexagonMaskedAddOpLowering,
-					HexagonMaskedSubOpLowering,
-					HexagonMaskedMulOpLowering,
-					HexagonMaskedDivOpLowering>(converter);
+					HexagonMulOpLowering>(converter);
 	// clang-format on
 }
 
 void mlir::configureHexagonLegalizeForExportTarget(
 				LLVMConversionTarget &target) {
 	// clang-format off
-	target.addLegalOp<HexagonIntrLoadEleOp,
-					HexagonIntrStoreEleOp,
-					HexagonIntrAddOp,
+	target.addLegalOp<
+	        HexagonIntrAddOp,
 					HexagonIntrSubOp,
-					HexagonIntrMulOp,
-					HexagonIntrDivOp,
-					HexagonMaskedIntrAddOp,
-					HexagonMaskedIntrSubOp,
-					HexagonMaskedIntrMulOp,
-					HexagonMaskedIntrDivOp>();
-	target.addIllegalOp<HexagonLoadOp,
-					HexagonStoreOp,
-					HexagonAddOp,
+					HexagonIntrMulOp>();
+	target.addIllegalOp<
+	        HexagonAddOp,
 					HexagonSubOp,
-					HexagonMulOp,
-					HexagonDivOp,
-					HexagonMaskedAddOp,
-					HexagonMaskedSubOp,
-					HexagonMaskedMulOp,
-					HexagonMaskedDivOp>();
+					HexagonMulOp>();
 	// clang-format on
 
 	auto hasScalableVectorType = [](TypeRange types) {

@@ -11,6 +11,7 @@
 // CHECK-NEXT: dlti
 // CHECK-NEXT: emitc
 // CHECK-NEXT: gpu
+// CHECK-NEXT: hexagon
 // CHECK-NEXT: linalg
 // CHECK-NEXT: llvm
 // CHECK-NEXT: math
