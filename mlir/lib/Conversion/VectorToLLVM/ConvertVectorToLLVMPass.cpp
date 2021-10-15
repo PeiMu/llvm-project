@@ -20,7 +20,6 @@
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/Dialect/Hexagon/HexagonDialect.h"
-#include "mlir/Dialect/Hexagon/Transforms.h"
 #include "mlir/Dialect/StandardOps/IR/Ops.h"
 #include "mlir/Dialect/Vector/VectorOps.h"
 #include "mlir/Dialect/X86Vector/Transforms.h"
@@ -108,8 +107,7 @@ void LowerVectorToLLVMPass::runOnOperation() {
     populateX86VectorLegalizeForLLVMExportPatterns(converter, patterns);
   }
   if (enableHexagon) {
-    configureHexagonLegalizeForExportTarget(target);
-    populateHexagonLegalizeForLLVMExportPatterns(converter, patterns);
+    target.addLegalDialect<hexagon::HexagonDialect>();
   }
 
   if (failed(

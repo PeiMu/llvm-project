@@ -14,7 +14,7 @@
 #define Hexagon_OPS
 
 include "mlir/Dialect/LLVMIR/LLVMOpBase.td"
-include "mlir/Dialect/Vector/ScalableVectorTypes.td"
+include "mlir/IR/OpBase.td"
 
 //===----------------------------------------------------------------------===//
 // Hexagon dialect definition
@@ -23,281 +23,65 @@ include "mlir/Dialect/Vector/ScalableVectorTypes.td"
 def Hexagon_Dialect : Dialect {
   let name = "hexagon";
   let cppNamespace = "::mlir::hexagon";
-  let summary = "Basic dialect to target RISC-V Vector extension";
+  let summary = "Basic dialect to target Hexagon Vector extension";
   let description = [{
-    RISC-V vector extension (Hexagon) is the vector instruction set with scalable
-    vector types, and the Hexagon instructions are vector length agnostic (VLA).
-    For more details about Hexagon, please see the
-    [RISCVV specification](https://github.com/riscv/riscv-v-spec).
-    This dialect contains the definitions of RISCVV operations and Hexagon
-    intrinsic operations. The former is used to interoperate with higher-level
-    dialects, and the latter is responsible for mapping to LLVM IR intrinsic.
+    // todo: supplement
+    This dialect contains the definitions of Hexagon operations and Hexagon
+    intrinsic operations.
   }];
 }
-
-//===----------------------------------------------------------------------===//
-// Hexagon LMUL type definitions
-//===----------------------------------------------------------------------===//
-
-class Hexagon_LMULType<string name, string typeMnemonic, string multiplier,
-                      list<Trait> traits = []>
-    : TypeDef<Hexagon_Dialect, name, traits, "::mlir::HexagonLMULType"> {
-  let mnemonic = typeMnemonic;
-  let summary = "The vector register group multiplier (" # multiplier # ").";
-  let printer = [{$_printer << "}]# typeMnemonic #[{";}];
-  let parser = [{return get}]# name #[{($_ctxt);}];
-}
-
-def Hexagon_LMUL_MF8 : Hexagon_LMULType<"MF8", "mf8", "1/8"> {}
-def Hexagon_LMUL_MF4 : Hexagon_LMULType<"MF4", "mf4", "1/4"> {}
-def Hexagon_LMUL_MF2 : Hexagon_LMULType<"MF2", "mf2", "1/2"> {}
-def Hexagon_LMUL_M1 : Hexagon_LMULType<"M1", "m1", "1"> {}
-def Hexagon_LMUL_M2 : Hexagon_LMULType<"M2", "m2", "2"> {}
-def Hexagon_LMUL_M4 : Hexagon_LMULType<"M4", "m4", "4"> {}
-def Hexagon_LMUL_M8 : Hexagon_LMULType<"M8", "m8", "8"> {}
-
-//===----------------------------------------------------------------------===//
-// Hexagon mask type definitions
-//===----------------------------------------------------------------------===//
-
-class Hexagon_MaskType<string name, string typeMnemonic, string maskLength,
-                      list<Trait> traits = []>
-    : TypeDef<Hexagon_Dialect, name, traits, "::mlir::HexagonMaskType"> {
-  let mnemonic = typeMnemonic;
-  let summary = "The mask length (SEW/LMUL = " # maskLength # ") type.";
-  let printer = [{$_printer << "}]# typeMnemonic #[{";}];
-  let parser = [{return get}]# name #[{($_ctxt);}];
-}
-
-def Hexagon_Mask1 : Hexagon_MaskType<"Mask1", "mask1", "1"> {}
-def Hexagon_Mask2 : Hexagon_MaskType<"Mask2", "mask2", "2"> {}
-def Hexagon_Mask4 : Hexagon_MaskType<"Mask4", "mask4", "4"> {}
-def Hexagon_Mask8 : Hexagon_MaskType<"Mask8", "mask8", "8"> {}
-def Hexagon_Mask16 : Hexagon_MaskType<"Mask16", "mask16", "16"> {}
-def Hexagon_Mask32 : Hexagon_MaskType<"Mask32", "mask32", "32"> {}
-def Hexagon_Mask64 : Hexagon_MaskType<"Mask64", "mask64", "64"> {}
-
-//===----------------------------------------------------------------------===//
-// Hexagon scalable vector type definitions
-//===----------------------------------------------------------------------===//
-
-def ScalableVectorType : ScalableVector_Type<Hexagon_Dialect, "ScalableVector"> {
-  let description = [{
-    Hexagon scalable vector type takes two parameters. The first one is vector
-    register group multiplier (LMUL) type or mask type. The second one is the
-    element type, which indicates the selected element width (SEW) setting.
-    The LMUL and SEW are used to configure scalable vector length at runtime.
-  }];
-
-  let parameters = (ins "Type":$sizeType, "Type":$elementType);
-
-  let printer = [{
-    $_printer << "vector<" << getImpl()->sizeType << ',';
-    $_printer << getImpl()->elementType << '>';
-  }];
-
-  let parser = [{
-    if ($_parser.parseLess()) return Type();
-    Type sizeType;
-    if ($_parser.parseType(sizeType)) return Type();
-    if ($_parser.parseComma()) return Type();
-    Type elementType;
-    if ($_parser.parseType(elementType)) return Type();
-    if ($_parser.parseGreater()) return Type();
-    return get($_ctxt, sizeType, elementType);
-  }];
-}
-//===----------------------------------------------------------------------===//
-// Additional LLVM type constraints
-//===----------------------------------------------------------------------===//
-
-def LLVMScalableVectorType :
-  Type<CPred<"$_self.isa<::mlir::LLVM::LLVMScalableVectorType>()">,
-       "LLVM dialect scalable vector type">;
-
-def LLVMPointerType :
-  Type<CPred<"$_self.isa<::mlir::LLVM::LLVMPointerType>()">,
-       "LLVM pointer type">;
-
-//===----------------------------------------------------------------------===//
-// Hexagon scalable vector type constraints
-//===----------------------------------------------------------------------===//
-
-def IsScalableVectorTypePred :
-    CPred<"$_self.isa<::mlir::hexagon::ScalableVectorType>()">;
-
-class HexagonScalableVectorOf<list<Type> allowedTypes> :
-    ContainerType<AnyTypeOf<allowedTypes>, IsScalableVectorTypePred,
-          "$_self.cast<::mlir::hexagon::ScalableVectorType>().getElementType()",
-          "Hexagon scalable vector">;
 
 //===----------------------------------------------------------------------===//
 // Hexagon operation definitions
 //===----------------------------------------------------------------------===//
 
-class Hexagon_Op<string mnemonic, list<OpTrait> traits = []> :
-  Op<Hexagon_Dialect, mnemonic, traits> {}
+// Hexagon dialect op that corresponds (and is convertible to) an LLVM IR
+// intrinsic.
+class Hexagon_IntrOp<string mnemonic, list<int> overloadedResults,
+                     list<int> overloadedOperands, int numResults,
+                     list<OpTrait> traits = [], bit requiresAccessGroup = 0,
+                     bit requiresAliasScope = 0>
+    : LLVM_IntrOpBase</*dialect=*/Hexagon_Dialect,
+                      /*opName=*/"intr." # mnemonic,
+                      /*enumName=*/"hexagon_V6_" # !subst(".", "_", mnemonic),
+                      /*overloadedResults=*/overloadedResults,
+                      /*overloadedOperands=*/overloadedOperands,
+                      /*traits=*/traits,
+                      /*numResults=*/numResults,
+                      /*requiresAccessGroup=*/requiresAccessGroup,
+                      /*requiresAliasScope=*/requiresAliasScope>;
+                      
+// Hexagon dialect op that corresponds to an LLVM IR intrinsic with one
+// overloaded result.
+class Hexagon_OverloadedOneResultIntrOp<string mnemonic,
+                                        list<OpTrait> traits = []>
+  : Hexagon_IntrOp<mnemonic, [0], [], 1, traits>;
 
-def HexagonLoadOp : Hexagon_Op<"load">,
-    Arguments<(ins Arg<AnyMemRef, "", [MemRead]>:$base, Index:$index,
-                       AnyInteger:$length)>,
-    Results<(outs HexagonScalableVectorOf<[AnyType]>:$result)> {
-  let summary = "Load scalable vector from memory";
+// Hexagon dialect op that corresponds to an LLVM IR intrinsic with one
+// overloaded result and overloaded operands list.
+class Hexagon_OverloadedOperandsWithOneResultIntrOp<string mnemonic,
+                                                    list<int> overloadedOperands,
+                                                    list<OpTrait> traits = []>
+  : Hexagon_IntrOp<mnemonic, [0], overloadedOperands, 1, traits>;
+
+class HexagonIntrBinaryOp<string mnemonic, string op_description> :
+    Hexagon_OverloadedOneResultIntrOp<mnemonic, [
+       NoSideEffect,
+       AllTypesMatch<["a", "b"]>,
+       SameOperandsAndResultType]> {
+  let summary = "binary op";
   let description = [{
-    Load a slice of memory into scalable vector with the given element length.
+    Signed Multiply Long (vector). This instruction add corresponding
+    signed integer values by elementwise.
   }];
-  let extraClassDeclaration = [{
-    MemRefType getMemRefType() {
-      return base().getType().cast<MemRefType>();
-    }
-  }];
-  let assemblyFormat = "$base `[` $index `]` `,` $length attr-dict `:` "
-    "type($base) `,` type($result) `,`  type($length)";
+
+  let arguments = (ins VectorOfLengthAndType<[8, 4, 2], [I8, I16, I32]>:$a,
+                         VectorOfLengthAndType<[8, 4, 2], [I8, I16, I32]>:$b);
+    let results = (outs VectorOfLengthAndType<[8, 4, 2], [I8, I16, I32]>:$res);
+    let assemblyFormat =
+      "$a `,` $b attr-dict `:` type($a)";
 }
 
-def HexagonStoreOp : Hexagon_Op<"store">,
-    Arguments<(ins HexagonScalableVectorOf<[AnyType]>:$value, Arg<AnyMemRef, "",
-                   [MemWrite]>:$base, Index:$index, AnyInteger:$length)> {
-  let summary = "Store scalable vector into memory";
-  let description = [{
-    Store the given element length of a scalable vector on a slice of memory.
-  }];
-  let extraClassDeclaration = [{
-    MemRefType getMemRefType() {
-      return base().getType().cast<MemRefType>();
-    }
-  }];
-  let assemblyFormat = "$value `,` $base `[` $index `]` `,` $length attr-dict "
-    "`:` type($value) `,` type($base) `,`  type($length)";
-}
-
-class Hexagon_BinaryAAXNoMask_Op<string mnemonic, string op_description,
-                             list<OpTrait> traits = []> :
-  Hexagon_Op<mnemonic, !listconcat(traits, [AllTypesMatch<["src1", "dst"]>])> {
-  let summary = op_description # "for Hexagon scalable vectors";
-  let description = [{ The `hexagon.}] # mnemonic # [{` operation can be of
-    vector-vector form or vector-scalar form. It also takes the vector length
-    value and returns a scalable vector with the result of the }]
-    # op_description # [{.}];
-  let arguments = (ins
-          HexagonScalableVectorOf<[AnyInteger]>:$src1,
-          AnyType:$src2,
-          AnyInteger:$length
-  );
-  let results = (outs HexagonScalableVectorOf<[AnyInteger]>:$dst);
-  let assemblyFormat = "$src1 `,` $src2 `,` $length attr-dict `:` type($src1) "
-    "`,` type($src2) `,` type($length)";
-}
-
-class Hexagon_BinaryAAXMask_Op<string mnemonic, string op_description,
-                              list<OpTrait> traits = []> :
-  Hexagon_Op<mnemonic, !listconcat(traits,
-                       [AllTypesMatch<["maskedoff", "src1", "dst"]>])> {
-  let summary = op_description # "for Hexagon scalable vectors";
-  let description = [{ The `hexagon.}] # mnemonic # [{` operation can be of
-    vector-vector form or vector-scalar form. It also takes the mask vector,
-    maskedoff vector, vector length value and returns a scalable vector with
-    the result of the }] # op_description # [{.}];
-  let arguments = (ins
-          HexagonScalableVectorOf<[AnyInteger]>:$maskedoff,
-          HexagonScalableVectorOf<[AnyInteger]>:$src1,
-          AnyType:$src2,
-          HexagonScalableVectorOf<[I1]>:$mask,
-          AnyInteger:$length
-  );
-  let results = (outs HexagonScalableVectorOf<[AnyInteger]>:$dst);
-  let assemblyFormat =
-    "$maskedoff `,` $src1 `,` $src2 `,` $mask `,` $length attr-dict `:` "
-    "type($maskedoff) `,` type($src2) `,` type($mask) `,` type($length)";
-}
-
-def HexagonAddOp : Hexagon_BinaryAAXNoMask_Op<"add", "addition">;
-def HexagonSubOp : Hexagon_BinaryAAXNoMask_Op<"sub", "subtraction">;
-def HexagonMulOp : Hexagon_BinaryAAXNoMask_Op<"mul", "multiplication">;
-def HexagonDivOp : Hexagon_BinaryAAXNoMask_Op<"div", "division">;
-
-def HexagonMaskedAddOp : Hexagon_BinaryAAXMask_Op<"masked.add",
-                                                "masked addition">;
-def HexagonMaskedSubOp : Hexagon_BinaryAAXMask_Op<"masked.sub",
-                                                "masked subtraction">;
-def HexagonMaskedMulOp : Hexagon_BinaryAAXMask_Op<"masked.mul",
-                                                "masked multiplication">;
-def HexagonMaskedDivOp : Hexagon_BinaryAAXMask_Op<"masked.div",
-                                                "masked division">;
-
-//===----------------------------------------------------------------------===//
-// Hexagon intrinsic operation definitions
-//===----------------------------------------------------------------------===//
-
-/*
-class Hexagon_USLoad_IntrOp<string mnemonic, list<OpTrait> traits = []> :
-  LLVM_IntrOpBase</*Dialect dialect=*/Hexagon_Dialect,
-                  /*string opName=*/"intr." # mnemonic,
-                  /*string enumName=*/"hexagon_V6_" # !subst(".", "_", mnemonic),
-                  /*list<int> overloadedResults=*/[0],
-                  /*list<int> overloadedOperands=*/[1],
-                  /*list<OpTrait> traits=*/traits,
-                  /*int numResults=*/1>;
-
-class Hexagon_USStore_IntrOp<string mnemonic, list<OpTrait> traits = []> :
-  LLVM_IntrOpBase</*Dialect dialect=*/Hexagon_Dialect,
-                  /*string opName=*/"intr." # mnemonic,
-                  /*string enumName=*/"hexagon_V6_" # !subst(".", "_", mnemonic),
-                  /*list<int> overloadedResults=*/[],
-                  /*list<int> overloadedOperands=*/[0, 2],
-                  /*list<OpTrait> traits=*/traits,
-                  /*int numResults=*/0>;
-*/
-
-class Hexagon_BinaryAAXNoMask_IntrOp<string mnemonic,
-                                    list<OpTrait> traits = []> :
-  LLVM_IntrOpBase</*Dialect dialect=*/Hexagon_Dialect,
-                  /*string opName=*/"intr." # mnemonic,
-                  /*string enumName=*/"hexagon_V6_" # !subst(".", "_", mnemonic),
-                  /*list<int> overloadedResults=*/[0],
-                  /*list<int> overloadedOperands=*/[1, 2],
-                  /*list<OpTrait> traits=*/traits,
-                  /*int numResults=*/1>;
-
-/*
-class Hexagon_BinaryAAXMask_IntrOp<string mnemonic, list<OpTrait> traits = []> :
-  LLVM_IntrOpBase</*Dialect dialect=*/Hexagon_Dialect,
-                  /*string opName=*/"intr." # mnemonic,
-                  /*string enumName=*/"hexagon_V6_" # !subst(".", "_", mnemonic),
-                  /*list<int> overloadedResults=*/[0],
-                  /*list<int> overloadedOperands=*/[2, 4],
-                  /*list<OpTrait> traits=*/traits,
-                  /*int numResults=*/1>;
-*/
-
-/*
-def HexagonIntrLoadEleOp : Hexagon_USLoad_IntrOp<"vle">,
-  Arguments<(ins LLVMPointerType, AnyInteger)>;
-def HexagonIntrStoreEleOp : Hexagon_USStore_IntrOp<"vse">,
-  Arguments<(ins LLVMScalableVectorType, LLVMPointerType, AnyInteger)>;
-*/
-
-def HexagonIntrAddOp : Hexagon_BinaryAAXNoMask_IntrOp<"vaddh">,
-  Arguments<(ins LLVMScalableVectorType, AnyType, AnyInteger)>;
-def HexagonIntrSubOp : Hexagon_BinaryAAXNoMask_IntrOp<"vsubh">,
-  Arguments<(ins LLVMScalableVectorType, AnyType, AnyInteger)>;
-def HexagonIntrMulOp : Hexagon_BinaryAAXNoMask_IntrOp<"vmpyh">,
-  Arguments<(ins LLVMScalableVectorType, AnyType, AnyInteger)>;
-/*def HexagonIntrDivOp : Hexagon_BinaryAAXNoMask_IntrOp<"vdiv">,
-  Arguments<(ins LLVMScalableVectorType, AnyType, AnyInteger)>;
-
-def HexagonMaskedIntrAddOp : Hexagon_BinaryAAXMask_IntrOp<"vadd_mask">,
-  Arguments<(ins LLVMScalableVectorType, LLVMScalableVectorType, AnyType,
-                 LLVMScalableVectorType, AnyInteger)>;
-def HexagonMaskedIntrSubOp : Hexagon_BinaryAAXMask_IntrOp<"vsub_mask">,
-  Arguments<(ins LLVMScalableVectorType, LLVMScalableVectorType, AnyType,
-                 LLVMScalableVectorType, AnyInteger)>;
-def HexagonMaskedIntrMulOp : Hexagon_BinaryAAXMask_IntrOp<"vmul_mask">,
-  Arguments<(ins LLVMScalableVectorType, LLVMScalableVectorType, AnyType,
-                 LLVMScalableVectorType, AnyInteger)>;
-def HexagonMaskedIntrDivOp : Hexagon_BinaryAAXMask_IntrOp<"vdiv_mask">,
-  Arguments<(ins LLVMScalableVectorType, LLVMScalableVectorType, AnyType,
-                 LLVMScalableVectorType, AnyInteger)>;
-*/
+def HexagonIntrAddOp : HexagonIntrBinaryOp<"vaddhw", "addition">;
 
 #endif // Hexagon_OPS

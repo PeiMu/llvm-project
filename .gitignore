@@ -51,6 +51,7 @@ autoconf/autom4te.cache
 /.idea
 mlir/.idea/
 mlir/cmake-build-debug/
+llvm/cmake-build-debug/
 
 #==============================================================================#
 # Directories to ignore (do not add trailing '/'s, they skip symlinks).

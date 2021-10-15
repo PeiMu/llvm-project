@@ -888,6 +888,8 @@ static std::string getIntrinsicNameImpl(Intrinsic::ID Id, ArrayRef<Type *> Tys,
                                         bool EarlyModuleCheck) {
 
   assert(Id < Intrinsic::num_intrinsics && "Invalid intrinsic ID!");
+  printf("Tys is empty: %d\n", Tys.empty());
+  printf( "Intrinsic::isOverloaded(Id): %d\n", Intrinsic::isOverloaded(Id));
   assert((Tys.empty() || Intrinsic::isOverloaded(Id)) &&
          "This version of getName is for overloaded intrinsics only");
   (void)EarlyModuleCheck;

@@ -22,7 +22,6 @@ add_mlir_conversion_library(MLIRVectorToLLVM
   MLIRLLVMIR
   MLIRMemRef
   MLIRHexagon
-  MLIRHexagonTransforms
   MLIRTargetLLVMIRExport
   MLIRTransforms
   MLIRVector

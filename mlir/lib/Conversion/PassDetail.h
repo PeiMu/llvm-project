@@ -84,6 +84,10 @@ namespace arm_neon {
 class ArmNeonDialect;
 } // end namespace arm_neon
 
+namespace hexagon {
+	class HexagonDialect;
+} // end namespace arm_neon
+
 #define GEN_PASS_CLASSES
 #include "mlir/Conversion/Passes.h.inc"
 
