@@ -55,17 +55,20 @@ class Hexagon_IntrOp<string mnemonic, list<int> overloadedResults,
 // overloaded result.
 class Hexagon_OverloadedOneResultIntrOp<string mnemonic,
                                         list<OpTrait> traits = []>
-  : Hexagon_IntrOp<mnemonic, [0], [], 1, traits>;
+  : Hexagon_IntrOp<mnemonic, [], [], 1, traits>;
 
 // Hexagon dialect op that corresponds to an LLVM IR intrinsic with one
 // overloaded result and overloaded operands list.
 class Hexagon_OverloadedOperandsWithOneResultIntrOp<string mnemonic,
                                                     list<int> overloadedOperands,
                                                     list<OpTrait> traits = []>
-  : Hexagon_IntrOp<mnemonic, [0], overloadedOperands, 1, traits>;
+  : Hexagon_IntrOp<mnemonic, [], overloadedOperands, 1, traits>;
+
+class Hexagon_NoOverloadedIntrOp<string mnemonic, list<OpTrait> traits = []>
+  : Hexagon_IntrOp<mnemonic, [], [], 1, traits>;
 
 class HexagonIntrBinaryOp<string mnemonic, string op_description> :
-    Hexagon_OverloadedOneResultIntrOp<mnemonic, [
+    Hexagon_NoOverloadedIntrOp<mnemonic, [
        NoSideEffect,
        AllTypesMatch<["a", "b"]>,
        SameOperandsAndResultType]> {
@@ -75,13 +78,13 @@ class HexagonIntrBinaryOp<string mnemonic, string op_description> :
     signed integer values by elementwise.
   }];
 
-  let arguments = (ins VectorOfLengthAndType<[8, 4, 2], [I8, I16, I32]>:$a,
-                         VectorOfLengthAndType<[8, 4, 2], [I8, I16, I32]>:$b);
-    let results = (outs VectorOfLengthAndType<[8, 4, 2], [I8, I16, I32]>:$res);
+  let arguments = (ins VectorOfLengthAndType<[16], [I32]>:$a,
+                         VectorOfLengthAndType<[16], [I32]>:$b);
+    let results = (outs VectorOfLengthAndType<[16], [I32]>:$res);
     let assemblyFormat =
       "$a `,` $b attr-dict `:` type($a)";
 }
 
-def HexagonIntrAddOp : HexagonIntrBinaryOp<"vaddhw", "addition">;
+def HexagonIntrAddOp : HexagonIntrBinaryOp<"vaddw", "addition">;
 
 #endif // Hexagon_OPS
