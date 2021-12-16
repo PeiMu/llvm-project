@@ -811,6 +811,7 @@ struct DeduplicateGenericOpInputs : public OpRewritePattern<GenericOp> {
 /// 1) All iterator types are parallel
 /// 2) The body contains just a yield operation with the yielded values being
 ///    the arguments corresponding to the operands.
+/// 3) The library_call field is nullptr.
 struct EraseIdentityGenericOp : public OpRewritePattern<GenericOp> {
   using OpRewritePattern<GenericOp>::OpRewritePattern;
 
@@ -831,6 +832,10 @@ struct EraseIdentityGenericOp : public OpRewritePattern<GenericOp> {
     auto yieldOp = dyn_cast<linalg::YieldOp>(body.getTerminator());
     if (!yieldOp)
       return failure();
+
+    // Check the library_call field is nullptr.
+    if (!genericOp.getLibraryCallName().empty())
+    	return failure();
 
     // Get the argument number of the returned values. That is the operand
     // number to use for replacing uses of this operation.
