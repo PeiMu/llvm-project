@@ -152,19 +152,21 @@ void LoopVectorizeHints::setAlreadyVectorized() {
 bool LoopVectorizeHints::allowVectorization(
     Function *F, Loop *L, bool VectorizeOnlyWhenForced) const {
   if (getForce() == LoopVectorizeHints::FK_Disabled) {
-    LLVM_DEBUG(dbgs() << "LV: Not vectorizing: #pragma vectorize disable.\n");
+    llvm::errs() << "LV: Not vectorizing: #pragma vectorize disable.\n";
     emitRemarkWithHints();
+    F->dump();
     return false;
   }
 
   if (VectorizeOnlyWhenForced && getForce() != LoopVectorizeHints::FK_Enabled) {
-    LLVM_DEBUG(dbgs() << "LV: Not vectorizing: No #pragma vectorize enable.\n");
+    llvm::errs() << "LV: Not vectorizing: No #pragma vectorize enable.\n";
     emitRemarkWithHints();
+    F->dump();
     return false;
   }
 
   if (getIsVectorized() == 1) {
-    LLVM_DEBUG(dbgs() << "LV: Not vectorizing: Disabled/already vectorized.\n");
+    llvm::errs() << "LV: Not vectorizing: Disabled/already vectorized.\n";
     // FIXME: Add interleave.disable metadata. This will allow
     // vectorize.disable to be used without disabling the pass and errors
     // to differentiate between disabled vectorization and a width of 1.
@@ -175,6 +177,7 @@ bool LoopVectorizeHints::allowVectorization(
              << "loop not vectorized: vectorization and interleaving are "
                 "explicitly disabled, or the loop has already been "
                 "vectorized";
+      F->dump();
     });
     return false;
   }
@@ -1104,6 +1107,7 @@ bool LoopVectorizationLegality::canVectorizeWithIfConvert() {
 // Helper function to canVectorizeLoopNestCFG.
 bool LoopVectorizationLegality::canVectorizeLoopCFG(Loop *Lp,
                                                     bool UseVPlanNativePath) {
+  llvm::errs() << "---LoopVectorizationLegality::canVectorizeLoopCFG---\n";
   assert((UseVPlanNativePath || Lp->isInnermost()) &&
          "VPlan-native path is not enabled.");
 
@@ -1145,6 +1149,7 @@ bool LoopVectorizationLegality::canVectorizeLoopCFG(Loop *Lp,
 
 bool LoopVectorizationLegality::canVectorizeLoopNestCFG(
     Loop *Lp, bool UseVPlanNativePath) {
+  llvm::errs() << "---LoopVectorizationLegality::canVectorizeLoopNestCFG---\n";
   // Store the result and return it at the end instead of exiting early, in case
   // allowExtraAnalysis is used to report multiple reasons for not vectorizing.
   bool Result = true;
@@ -1170,6 +1175,7 @@ bool LoopVectorizationLegality::canVectorizeLoopNestCFG(
 }
 
 bool LoopVectorizationLegality::canVectorize(bool UseVPlanNativePath) {
+  llvm::errs() << "-------LoopVectorizationLegality::canVectorize-------\n";
   // Store the result and return it at the end instead of exiting early, in case
   // allowExtraAnalysis is used to report multiple reasons for not vectorizing.
   bool Result = true;
@@ -1211,7 +1217,8 @@ bool LoopVectorizationLegality::canVectorize(bool UseVPlanNativePath) {
   // Check if we can if-convert non-single-bb loops.
   unsigned NumBlocks = TheLoop->getNumBlocks();
   if (NumBlocks != 1 && !canVectorizeWithIfConvert()) {
-    LLVM_DEBUG(dbgs() << "LV: Can't if-convert the loop.\n");
+    llvm::errs() << "LV: Can't if-convert the loop.\n";
+    TheLoop->dump();
     if (DoExtraAnalysis)
       Result = false;
     else
@@ -1220,7 +1227,8 @@ bool LoopVectorizationLegality::canVectorize(bool UseVPlanNativePath) {
 
   // Check if we can vectorize the instructions and CFG in this loop.
   if (!canVectorizeInstrs()) {
-    LLVM_DEBUG(dbgs() << "LV: Can't vectorize the instructions or CFG\n");
+    llvm::errs() << "LV: Can't vectorize the instructions or CFG\n";
+    TheLoop->dump();
     if (DoExtraAnalysis)
       Result = false;
     else
@@ -1229,7 +1237,8 @@ bool LoopVectorizationLegality::canVectorize(bool UseVPlanNativePath) {
 
   // Go over each instruction and look at memory deps.
   if (!canVectorizeMemory()) {
-    LLVM_DEBUG(dbgs() << "LV: Can't vectorize due to memory conflicts\n");
+    llvm::errs() << "LV: Can't vectorize due to memory conflicts\n";
+    TheLoop->dump();
     if (DoExtraAnalysis)
       Result = false;
     else

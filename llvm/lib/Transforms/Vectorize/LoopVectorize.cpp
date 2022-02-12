@@ -1096,6 +1096,11 @@ void reportVectorizationFailure(const StringRef DebugMsg,
                                 OptimizationRemarkEmitter *ORE, Loop *TheLoop,
                                 Instruction *I) {
   LLVM_DEBUG(debugVectorizationMessage("Not vectorizing: ", DebugMsg, I));
+  llvm::errs() << "Not vectorizing: " << DebugMsg << "\n";
+  if (TheLoop)
+    TheLoop->dump();
+  if (I)
+    I->dump();
   LoopVectorizeHints Hints(TheLoop, true /* doesn't matter */, *ORE);
   ORE->emit(
       createLVAnalysis(Hints.vectorizeAnalysisPassName(), ORETag, TheLoop, I)
@@ -2233,6 +2238,9 @@ static void collectSupportedLoops(Loop &L, LoopInfo *LI,
       // already known to be reducible. We can use an inherited attribute for
       // that.
       return;
+    } else {
+      llvm::errs() << "There's irreducible CFG:\n";
+      L.dump();
     }
   }
   for (Loop *InnerL : L)
@@ -2258,6 +2266,7 @@ struct LoopVectorize : public FunctionPass {
   bool runOnFunction(Function &F) override {
     if (skipFunction(F))
       return false;
+    llvm::errs() << "-------runOnFunction-------\n";
 
     auto *SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
     auto *LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
@@ -10234,6 +10243,7 @@ LoopVectorizePass::LoopVectorizePass(LoopVectorizeOptions Opts)
                               !EnableLoopVectorization) {}
 
 bool LoopVectorizePass::processLoop(Loop *L) {
+  llvm::errs() << "-------LoopVectorizePass::processLoop-------\n";
   assert((EnableVPlanNativePath || L->isInnermost()) &&
          "VPlan-native path is not enabled. Only process inner loops.");
 
@@ -10241,14 +10251,13 @@ bool LoopVectorizePass::processLoop(Loop *L) {
   const std::string DebugLocStr = getDebugLocString(L);
 #endif /* NDEBUG */
 
-  LLVM_DEBUG(dbgs() << "\nLV: Checking a loop in \""
+  llvm::errs() << "\nLV: Checking a loop in \""
                     << L->getHeader()->getParent()->getName() << "\" from "
-                    << DebugLocStr << "\n");
+                    << DebugLocStr << "\n";
 
   LoopVectorizeHints Hints(L, InterleaveOnlyWhenForced, *ORE);
 
-  LLVM_DEBUG(
-      dbgs() << "LV: Loop hints:"
+  llvm::errs() << "LV: Loop hints:"
              << " force="
              << (Hints.getForce() == LoopVectorizeHints::FK_Disabled
                      ? "disabled"
@@ -10256,10 +10265,12 @@ bool LoopVectorizePass::processLoop(Loop *L) {
                             ? "enabled"
                             : "?"))
              << " width=" << Hints.getWidth()
-             << " interleave=" << Hints.getInterleave() << "\n");
+             << " interleave=" << Hints.getInterleave() << "\n";
 
   // Function containing loop
   Function *F = L->getHeader()->getParent();
+  llvm::errs() << "Function containing loop:\t";
+  F->dump();
 
   // Looking at the diagnostic output is the only way to determine if a loop
   // was vectorized (other than looking at the IR or machine code), so it
@@ -10359,8 +10370,9 @@ bool LoopVectorizePass::processLoop(Loop *L) {
              << "loop not vectorized: cannot prove it is safe to reorder "
                 "floating-point operations";
     });
-    LLVM_DEBUG(dbgs() << "LV: loop not vectorized: cannot prove it is safe to "
-                         "reorder floating-point operations\n");
+    llvm::errs() << "LV: loop not vectorized: cannot prove it is safe to "
+                         "reorder floating-point operations\n";
+    L->dump();
     Hints.emitRemarkWithHints();
     return false;
   }
@@ -10407,7 +10419,8 @@ bool LoopVectorizePass::processLoop(Loop *L) {
   std::pair<StringRef, std::string> VecDiagMsg, IntDiagMsg;
   bool VectorizeLoop = true, InterleaveLoop = true;
   if (VF.Width.isScalar()) {
-    LLVM_DEBUG(dbgs() << "LV: Vectorization is possible but not beneficial.\n");
+    llvm::errs() << "LV: Vectorization is possible but not beneficial.\n";
+    L->dump();
     VecDiagMsg = std::make_pair(
         "VectorizationNotBeneficial",
         "the cost-model indicates that vectorization is not beneficial");
@@ -10602,6 +10615,8 @@ LoopVectorizeResult LoopVectorizePass::runImpl(
     DemandedBits &DB_, AAResults &AA_, AssumptionCache &AC_,
     std::function<const LoopAccessInfo &(Loop &)> &GetLAA_,
     OptimizationRemarkEmitter &ORE_, ProfileSummaryInfo *PSI_) {
+  llvm::errs() << "-------LoopVectorizePass::runImpl-------\n";
+  F.dump();
   SE = &SE_;
   LI = &LI_;
   TTI = &TTI_;
@@ -10623,8 +10638,11 @@ LoopVectorizeResult LoopVectorizePass::runImpl(
   // vector registers, loop vectorization may still enable scalar
   // interleaving.
   if (!TTI->getNumberOfRegisters(TTI->getRegisterClassForType(true)) &&
-      TTI->getMaxInterleaveFactor(1) < 2)
+      TTI->getMaxInterleaveFactor(1) < 2) {
+    llvm::errs() << "the target claims to have no vector registers, and interleaving won't help ILP.";
+    F.dump();
     return LoopVectorizeResult(false, false);
+  }
 
   bool Changed = false, CFGChanged = false;
 
@@ -10664,6 +10682,7 @@ LoopVectorizeResult LoopVectorizePass::runImpl(
 
 PreservedAnalyses LoopVectorizePass::run(Function &F,
                                          FunctionAnalysisManager &AM) {
+  llvm::errs() << "-------LoopVectorizePass::run-------\n";
     auto &SE = AM.getResult<ScalarEvolutionAnalysis>(F);
     auto &LI = AM.getResult<LoopAnalysis>(F);
     auto &TTI = AM.getResult<TargetIRAnalysis>(F);
@@ -10715,6 +10734,7 @@ PreservedAnalyses LoopVectorizePass::run(Function &F,
 
 void LoopVectorizePass::printPipeline(
     raw_ostream &OS, function_ref<StringRef(StringRef)> MapClassName2PassName) {
+	llvm::errs() << "-------LoopVectorizePass::printPipeline-------\n";
   static_cast<PassInfoMixin<LoopVectorizePass> *>(this)->printPipeline(
       OS, MapClassName2PassName);
 
