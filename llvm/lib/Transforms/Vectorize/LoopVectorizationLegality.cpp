@@ -154,14 +154,24 @@ bool LoopVectorizeHints::allowVectorization(
   if (getForce() == LoopVectorizeHints::FK_Disabled) {
     llvm::errs() << "LV: Not vectorizing: #pragma vectorize disable.\n";
     emitRemarkWithHints();
-    F->dump();
+    if (L) {
+      L->dump();
+      L->dumpVerbose();
+    } else {
+      llvm::errs() << "LV: The loop is nullptr.\n";
+    }
     return false;
   }
 
   if (VectorizeOnlyWhenForced && getForce() != LoopVectorizeHints::FK_Enabled) {
     llvm::errs() << "LV: Not vectorizing: No #pragma vectorize enable.\n";
     emitRemarkWithHints();
-    F->dump();
+    if (L) {
+      L->dump();
+      L->dumpVerbose();
+    } else {
+      llvm::errs() << "LV: The loop is nullptr.\n";
+    }
     return false;
   }
 
@@ -177,8 +187,13 @@ bool LoopVectorizeHints::allowVectorization(
              << "loop not vectorized: vectorization and interleaving are "
                 "explicitly disabled, or the loop has already been "
                 "vectorized";
-      F->dump();
     });
+    if (L) {
+      L->dump();
+      L->dumpVerbose();
+    } else {
+      llvm::errs() << "LV: The loop is nullptr.\n";
+    }
     return false;
   }
 
@@ -1107,7 +1122,7 @@ bool LoopVectorizationLegality::canVectorizeWithIfConvert() {
 // Helper function to canVectorizeLoopNestCFG.
 bool LoopVectorizationLegality::canVectorizeLoopCFG(Loop *Lp,
                                                     bool UseVPlanNativePath) {
-  llvm::errs() << "---LoopVectorizationLegality::canVectorizeLoopCFG---\n";
+  llvm::dbgs() << "---LoopVectorizationLegality::canVectorizeLoopCFG---\n";
   assert((UseVPlanNativePath || Lp->isInnermost()) &&
          "VPlan-native path is not enabled.");
 
@@ -1149,7 +1164,7 @@ bool LoopVectorizationLegality::canVectorizeLoopCFG(Loop *Lp,
 
 bool LoopVectorizationLegality::canVectorizeLoopNestCFG(
     Loop *Lp, bool UseVPlanNativePath) {
-  llvm::errs() << "---LoopVectorizationLegality::canVectorizeLoopNestCFG---\n";
+  llvm::dbgs() << "---LoopVectorizationLegality::canVectorizeLoopNestCFG---\n";
   // Store the result and return it at the end instead of exiting early, in case
   // allowExtraAnalysis is used to report multiple reasons for not vectorizing.
   bool Result = true;
@@ -1175,7 +1190,7 @@ bool LoopVectorizationLegality::canVectorizeLoopNestCFG(
 }
 
 bool LoopVectorizationLegality::canVectorize(bool UseVPlanNativePath) {
-  llvm::errs() << "-------LoopVectorizationLegality::canVectorize-------\n";
+  llvm::dbgs() << "-------LoopVectorizationLegality::canVectorize-------\n";
   // Store the result and return it at the end instead of exiting early, in case
   // allowExtraAnalysis is used to report multiple reasons for not vectorizing.
   bool Result = true;
@@ -1219,6 +1234,7 @@ bool LoopVectorizationLegality::canVectorize(bool UseVPlanNativePath) {
   if (NumBlocks != 1 && !canVectorizeWithIfConvert()) {
     llvm::errs() << "LV: Can't if-convert the loop.\n";
     TheLoop->dump();
+    TheLoop->dumpVerbose();
     if (DoExtraAnalysis)
       Result = false;
     else
@@ -1229,6 +1245,7 @@ bool LoopVectorizationLegality::canVectorize(bool UseVPlanNativePath) {
   if (!canVectorizeInstrs()) {
     llvm::errs() << "LV: Can't vectorize the instructions or CFG\n";
     TheLoop->dump();
+    TheLoop->dumpVerbose();
     if (DoExtraAnalysis)
       Result = false;
     else
@@ -1239,6 +1256,7 @@ bool LoopVectorizationLegality::canVectorize(bool UseVPlanNativePath) {
   if (!canVectorizeMemory()) {
     llvm::errs() << "LV: Can't vectorize due to memory conflicts\n";
     TheLoop->dump();
+    TheLoop->dumpVerbose();
     if (DoExtraAnalysis)
       Result = false;
     else
