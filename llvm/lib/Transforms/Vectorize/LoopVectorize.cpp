@@ -10428,7 +10428,8 @@ bool LoopVectorizePass::processLoop(Loop *L) {
   std::pair<StringRef, std::string> VecDiagMsg, IntDiagMsg;
   bool VectorizeLoop = true, InterleaveLoop = true;
   if (VF.Width.isScalar()) {
-    llvm::errs() << "LV: Vectorization is possible but not beneficial.\n";
+    llvm::errs() << "LV: The vector_width is scalar, so vectorization is "
+										"possible but not beneficial.\n";
     L->dump();
     L->dumpVerbose();
     VecDiagMsg = std::make_pair(

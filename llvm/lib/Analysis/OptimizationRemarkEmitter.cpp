@@ -76,6 +76,8 @@ void OptimizationRemarkEmitter::computeHotness(
 
 void OptimizationRemarkEmitter::emit(
     DiagnosticInfoOptimizationBase &OptDiagBase) {
+  llvm::errs() << "---------OptDiagBase message---------\n"
+    << OptDiagBase.getMsg() << "\n";
   auto &OptDiag = cast<DiagnosticInfoIROptimization>(OptDiagBase);
   computeHotness(OptDiag);
 
